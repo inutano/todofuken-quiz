@@ -280,10 +280,10 @@
     const totalMs = performance.now() - state.startMs;
     const all = state.miss === 0;
     const key = window.LOGIC.settingKey(state.settings);
+    const before = (records[key] || {}).bestTimeMs ?? null;
     records = window.LOGIC.updateRecord(records, key, totalMs, all);
-    const before = (JSON.parse(localStorage.getItem(REC_KEY)||'{}')[key]||{}).bestTimeMs || null;
     saveRecords();
-    const newBest = all && (before===null || totalMs < before);
+    const newBest = all && (before === null || totalMs < before);
     const body = $('result-body'); body.innerHTML='';
     const card = document.createElement('div'); card.className='card';
     const acc = state.queue.length ? Math.round(state.correct/(state.correct+state.miss)*100) : 0;
