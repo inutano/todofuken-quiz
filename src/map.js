@@ -10,6 +10,8 @@
     onPickCb = (opts && opts.onPick) || null;
     clickable = null;
     container.innerHTML = '';
+    for (const k in paths) delete paths[k];
+    for (const k in marks) delete marks[k];
     svg = document.createElementNS(SVGNS, 'svg');
     svg.setAttribute('viewBox', MAP_VIEWBOX.join(' '));
     svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
@@ -43,6 +45,7 @@
     if (paths[prefId]) paths[prefId].setAttribute('fill', FILL.answered);
     if (marks[prefId]) marks[prefId].remove();
     const p = PREFECTURES.find(x => x.id === prefId);
+    if (!p) return;
     const t = document.createElementNS(SVGNS, 'text');
     t.setAttribute('x', p.c[0]); t.setAttribute('y', p.c[1]);
     t.setAttribute('font-size', '18'); t.setAttribute('text-anchor', 'middle');
