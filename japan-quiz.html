@@ -6,9 +6,10 @@
 <title>都道府県クイズ</title>
 <style>
 :root{
-  --bg1:#1b2a6b; --bg2:#3d6ee0; --card:#ffffff; --ink:#20305a;
-  --accent:#ffd23f; --good:#2ecc71; --bad:#ff5a7a; --sea:#bfe3f0;
-  --pref:#8fd18b; --pref-answered:#ffe08a; --pref-hint:#ffb3c1; --pref-target:#ff7a59;
+  --bg1:#f7e8ff; --bg2:#e3f6ff; --card:#fffdff; --ink:#6a4a86;
+  --accent:#ffd1e8; --good:#b8f0d0; --bad:#ffc2cf; --sea:#d9f2fb;
+  --pref:#bfead0; --pref-answered:#fff0b0; --pref-hint:#ffc7e0; --pref-target:#ffb0a8;
+  --btn-shadow:#e6a9c9; --edge:#f3c9e4;
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;font-family:"Hiragino Maru Gothic ProN","Hiragino Sans",system-ui,sans-serif;color:var(--ink)}
@@ -16,24 +17,26 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2));overflow:hidden}
 #app{height:100vh;display:flex;align-items:stretch;justify-content:center}
 .screen{width:100%;max-width:900px;margin:auto;padding:16px;display:flex;flex-direction:column;height:100vh}
 .hidden{display:none!important}
-.title{color:#fff;text-align:center;font-size:clamp(28px,6vw,52px);margin:12px 0;text-shadow:0 4px 0 rgba(0,0,0,.25)}
-h2{color:#fff;text-align:center;font-size:32px}
+.title{color:var(--ink);text-align:center;font-size:clamp(28px,6vw,52px);margin:12px 0;text-shadow:0 3px 0 #ffe3f2,0 4px 6px rgba(200,150,200,.35)}
+.title::before{content:"✧ "}
+.title::after{content:" ♡"}
+h2{color:var(--ink);text-align:center;font-size:32px;text-shadow:0 2px 0 #ffe3f2}
 button{font-family:inherit;cursor:pointer;border:none}
 .btn{background:var(--accent);color:var(--ink);font-weight:800;font-size:20px;
-  padding:14px 20px;border-radius:999px;box-shadow:0 5px 0 #c9a012;transition:transform .05s}
-.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #c9a012}
-.btn.sel{outline:4px solid #fff}
-.card{background:var(--card);border-radius:22px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  padding:14px 20px;border-radius:999px;box-shadow:0 5px 0 var(--btn-shadow);transition:transform .05s}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--btn-shadow)}
+.btn.sel{outline:4px solid #fff;outline-offset:1px;box-shadow:0 5px 0 var(--btn-shadow),0 0 0 4px #ffb6dd}
+.card{background:var(--card);border-radius:26px;padding:16px;border:3px solid var(--edge);box-shadow:0 10px 30px rgba(180,140,200,.25)}
 #menu-body{display:flex;flex-direction:column;gap:14px;overflow:auto}
 .opt-row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
-.opt-label{color:#fff;font-weight:800;text-align:center;margin-bottom:4px}
-#quiz-hud{display:flex;justify-content:space-between;color:#fff;font-weight:800;font-size:20px;padding:6px 10px}
+.opt-label{color:var(--ink);font-weight:800;text-align:center;margin-bottom:4px}
+#quiz-hud{display:flex;justify-content:space-between;color:var(--ink);font-weight:800;font-size:20px;padding:6px 10px}
 #quiz-stage{flex:1;display:flex;align-items:center;justify-content:center;min-height:0}
 #quiz-stage svg{width:100%;height:100%}
 #quiz-answer{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;padding:12px 0}
-.prompt{color:#fff;font-size:clamp(24px,5vw,40px);font-weight:900;text-align:center}
+.prompt{color:var(--ink);font-size:clamp(24px,5vw,40px);font-weight:900;text-align:center;text-shadow:0 2px 0 #ffe3f2}
 #rain-layer{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:50}
-.type-input{font-size:28px;padding:10px 14px;border-radius:14px;border:3px solid var(--accent);text-align:center;width:min(320px,80vw)}
+.type-input{font-size:28px;padding:10px 14px;border-radius:16px;border:3px solid var(--accent);text-align:center;width:min(320px,80vw);color:var(--ink)}
 .correct-flash{animation:flash .4s}
 @keyframes flash{0%{background:var(--good)}100%{background:transparent}}
 .shake{animation:shake .35s}
@@ -97,12 +100,21 @@ function isValidCombo(s) {
   if (s.mode === 'solo' && s.dir === 'name2place' && s.level === 'hard') return false;
   return true;
 }
-function pickN(answerId, allIds, n, rand) {
-  const pool = shuffled(allIds.filter(id => id !== answerId), rand).slice(0, n - 1);
-  return shuffled([answerId, ...pool], rand);
+function pickN(answerId, allIds, n, rand, exclude) {
+  const ex = new Set(exclude || []);
+  ex.delete(answerId); // 正解は常に許可
+  let pool = shuffled(allIds.filter(id => id !== answerId && !ex.has(id)), rand);
+  let picks = pool.slice(0, n - 1);
+  if (picks.length < n - 1) {
+    // 未回答が不足する終盤: 除外集合も使って不足分を補い、常に n 件を保証
+    const used = new Set([answerId, ...picks]);
+    const filler = shuffled(allIds.filter(id => !used.has(id)), rand);
+    picks = picks.concat(filler.slice(0, (n - 1) - picks.length));
+  }
+  return shuffled([answerId, ...picks], rand);
 }
-function makeChoices(answerId, allIds, rand) { return pickN(answerId, allIds, 3, rand); }
-function makeMapHints(answerId, allIds, rand) { return pickN(answerId, allIds, 3, rand); }
+function makeChoices(answerId, allIds, rand, exclude = []) { return pickN(answerId, allIds, 3, rand, exclude); }
+function makeMapHints(answerId, allIds, rand, exclude = []) { return pickN(answerId, allIds, 3, rand, exclude); }
 function normalizeAnswer(s) { return String(s).replace(/[\s　]/g, '').trim(); }
 function judgeTyped(input, pref) {
   const n = normalizeAnswer(input);
@@ -223,7 +235,7 @@ if (typeof module !== 'undefined' && module.exports) {
 (function () {
   'use strict';
   const SVGNS = 'http://www.w3.org/2000/svg';
-  const MAX = 120;
+  const MAX = 160;
   let particles = [];
   let running = false;
   let layer = null;
@@ -249,7 +261,7 @@ if (typeof module !== 'undefined' && module.exports) {
       particles.push({
         el: t, x: rnd(5, 95), y: rnd(-15, -2),
         vx: rnd(-0.6, 0.6), vy: rnd(0, 0.4),
-        life: rnd(2.0, 2.8), age: 0,
+        life: rnd(3.6, 4.6), age: 0, resting: false,
       });
     }
     if (!running) { running = true; requestAnimationFrame(step); }
@@ -260,16 +272,24 @@ if (typeof module !== 'undefined' && module.exports) {
     if (last == null) last = ts;
     let dt = (ts - last) / 16.67; last = ts;
     if (dt > 3) dt = 3;
-    const G = 0.09, REST = 0.72, FLOOR = 98, WALL_L = 1, WALL_R = 99;
+    const G = 0.09, REST = 0.7, FLOOR = 98, WALL_L = 1, WALL_R = 99, FADE = 0.8;
     for (const p of particles) {
-      p.vy += G * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.age += dt / 60;
-      if (p.y > FLOOR) { p.y = FLOOR; p.vy = -Math.abs(p.vy) * REST; p.vx *= 0.85; }
-      if (p.x < WALL_L) { p.x = WALL_L; p.vx = Math.abs(p.vx) * REST; }
-      if (p.x > WALL_R) { p.x = WALL_R; p.vx = -Math.abs(p.vx) * REST; }
-      const fade = Math.max(0, 1 - p.age / p.life);
+      p.age += dt / 60;
+      if (!p.resting) {
+        p.vy += G * dt; p.x += p.vx * dt; p.y += p.vy * dt;
+        if (p.y > FLOOR) { p.y = FLOOR; p.vy = -Math.abs(p.vy) * REST; p.vx *= 0.8; }
+        if (p.x < WALL_L) { p.x = WALL_L; p.vx = Math.abs(p.vx) * REST; }
+        if (p.x > WALL_R) { p.x = WALL_R; p.vx = -Math.abs(p.vx) * REST; }
+        // 床付近で十分減速したら着地させてその場に留める
+        if (p.y >= FLOOR - 0.4 && Math.abs(p.vy) < 0.35 && Math.abs(p.vx) < 0.25) {
+          p.resting = true; p.y = FLOOR; p.vx = 0; p.vy = 0;
+        }
+      }
+      const remain = p.life - p.age;
+      const op = remain < FADE ? Math.max(0, remain / FADE) : 1;
       p.el.setAttribute('x', p.x.toFixed(2));
       p.el.setAttribute('y', p.y.toFixed(2));
-      p.el.setAttribute('opacity', fade.toFixed(2));
+      p.el.setAttribute('opacity', op.toFixed(2));
     }
     const alive = [];
     for (const p of particles) {
@@ -445,7 +465,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
   // 3択の名前ボタンを作る（place2name 系で共通）
   function nameChoiceButtons(answerId) {
-    const ids = window.LOGIC.makeChoices(answerId, allIds, seedRand());
+    const ids = window.LOGIC.makeChoices(answerId, allIds, seedRand(), Object.keys(answeredMarks).map(Number));
     const wrap = $('quiz-answer');
     for (const id of ids) {
       const b = document.createElement('button');
@@ -485,7 +505,7 @@ if (typeof module !== 'undefined' && module.exports) {
     const p = prefById(q.prefId);
     setPrompt(`「${p.kanji}」はどこ？`);
     if (state.settings.level === 'easy') {
-      const hints = window.LOGIC.makeMapHints(q.prefId, allIds, seedRand());
+      const hints = window.LOGIC.makeMapHints(q.prefId, allIds, seedRand(), Object.keys(answeredMarks).map(Number));
       const st = {}; hints.forEach(id => st[id]='hint');
       MAP.setStates(st); reapplyAnswered();
       MAP.setClickable(hints);
@@ -530,7 +550,7 @@ if (typeof module !== 'undefined' && module.exports) {
     // 名前を提示し、3つの形から選ぶ（easy のみ・hard は無効化済み）
     const p = prefById(q.prefId);
     setPrompt(`「${p.kanji}」のかたちは？`);
-    const ids = window.LOGIC.makeChoices(q.prefId, allIds, seedRand());
+    const ids = window.LOGIC.makeChoices(q.prefId, allIds, seedRand(), Object.keys(answeredMarks).map(Number));
     const stage = $('quiz-stage'); stage.innerHTML='';
     const rowWrap = document.createElement('div');
     rowWrap.style.display='flex'; rowWrap.style.gap='12px'; rowWrap.style.width='100%'; rowWrap.style.height='60%';
