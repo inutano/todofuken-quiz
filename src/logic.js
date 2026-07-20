@@ -23,12 +23,21 @@ function isValidCombo(s) {
   if (s.mode === 'solo' && s.dir === 'name2place' && s.level === 'hard') return false;
   return true;
 }
-function pickN(answerId, allIds, n, rand) {
-  const pool = shuffled(allIds.filter(id => id !== answerId), rand).slice(0, n - 1);
-  return shuffled([answerId, ...pool], rand);
+function pickN(answerId, allIds, n, rand, exclude) {
+  const ex = new Set(exclude || []);
+  ex.delete(answerId); // 正解は常に許可
+  let pool = shuffled(allIds.filter(id => id !== answerId && !ex.has(id)), rand);
+  let picks = pool.slice(0, n - 1);
+  if (picks.length < n - 1) {
+    // 未回答が不足する終盤: 除外集合も使って不足分を補い、常に n 件を保証
+    const used = new Set([answerId, ...picks]);
+    const filler = shuffled(allIds.filter(id => !used.has(id)), rand);
+    picks = picks.concat(filler.slice(0, (n - 1) - picks.length));
+  }
+  return shuffled([answerId, ...picks], rand);
 }
-function makeChoices(answerId, allIds, rand) { return pickN(answerId, allIds, 3, rand); }
-function makeMapHints(answerId, allIds, rand) { return pickN(answerId, allIds, 3, rand); }
+function makeChoices(answerId, allIds, rand, exclude = []) { return pickN(answerId, allIds, 3, rand, exclude); }
+function makeMapHints(answerId, allIds, rand, exclude = []) { return pickN(answerId, allIds, 3, rand, exclude); }
 function normalizeAnswer(s) { return String(s).replace(/[\s　]/g, '').trim(); }
 function judgeTyped(input, pref) {
   const n = normalizeAnswer(input);

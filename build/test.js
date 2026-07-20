@@ -112,6 +112,36 @@ test('updateRecord only on allCorrect, keeps faster', () => {
   r = L.updateRecord(r, 'k', 8000, true);  assert.strictEqual(r.k.bestTimeMs, 5000);
   r = L.updateRecord(r, 'k', 3000, true);  assert.strictEqual(r.k.bestTimeMs, 3000);
 });
+test('makeChoices excludes answered ids', () => {
+  const ids = Array.from({length:47},(_,i)=>i+1);
+  const c = L.makeChoices(13, ids, L.mulberry32(3), [5,6,7,8,9,10]);
+  assert.strictEqual(c.length, 3);
+  assert.ok(c.includes(13));
+  assert.strictEqual(new Set(c).size, 3);
+  for (const ex of [5,6,7,8,9,10]) assert.ok(!c.includes(ex), 'excluded '+ex);
+});
+test('makeChoices fallback still returns 3 when pool too small', () => {
+  const ids = [1,2,3,4];
+  const c = L.makeChoices(1, ids, L.mulberry32(2), [2,3,4]); // pool empty after exclude
+  assert.strictEqual(c.length, 3);
+  assert.ok(c.includes(1));
+  assert.strictEqual(new Set(c).size, 3);
+});
+test('makeMapHints excludes answered ids', () => {
+  const ids = Array.from({length:47},(_,i)=>i+1);
+  const h = L.makeMapHints(20, ids, L.mulberry32(9), [1,2,3,4,5]);
+  assert.strictEqual(h.length, 3);
+  assert.ok(h.includes(20));
+  assert.strictEqual(new Set(h).size, 3);
+  for (const ex of [1,2,3,4,5]) assert.ok(!h.includes(ex));
+});
+test('makeChoices backward-compatible without exclude arg', () => {
+  const ids = Array.from({length:47},(_,i)=>i+1);
+  const c = L.makeChoices(30, ids, L.mulberry32(1));
+  assert.strictEqual(c.length, 3);
+  assert.ok(c.includes(30));
+  assert.strictEqual(new Set(c).size, 3);
+});
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
