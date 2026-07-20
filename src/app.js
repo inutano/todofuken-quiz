@@ -159,7 +159,7 @@
 
   // 3択の名前ボタンを作る（place2name 系で共通）
   function nameChoiceButtons(answerId) {
-    const ids = window.LOGIC.makeChoices(answerId, allIds, seedRand());
+    const ids = window.LOGIC.makeChoices(answerId, allIds, seedRand(), Object.keys(answeredMarks).map(Number));
     const wrap = $('quiz-answer');
     for (const id of ids) {
       const b = document.createElement('button');
@@ -199,7 +199,7 @@
     const p = prefById(q.prefId);
     setPrompt(`「${p.kanji}」はどこ？`);
     if (state.settings.level === 'easy') {
-      const hints = window.LOGIC.makeMapHints(q.prefId, allIds, seedRand());
+      const hints = window.LOGIC.makeMapHints(q.prefId, allIds, seedRand(), Object.keys(answeredMarks).map(Number));
       const st = {}; hints.forEach(id => st[id]='hint');
       MAP.setStates(st); reapplyAnswered();
       MAP.setClickable(hints);
@@ -244,7 +244,7 @@
     // 名前を提示し、3つの形から選ぶ（easy のみ・hard は無効化済み）
     const p = prefById(q.prefId);
     setPrompt(`「${p.kanji}」のかたちは？`);
-    const ids = window.LOGIC.makeChoices(q.prefId, allIds, seedRand());
+    const ids = window.LOGIC.makeChoices(q.prefId, allIds, seedRand(), Object.keys(answeredMarks).map(Number));
     const stage = $('quiz-stage'); stage.innerHTML='';
     const rowWrap = document.createElement('div');
     rowWrap.style.display='flex'; rowWrap.style.gap='12px'; rowWrap.style.width='100%'; rowWrap.style.height='60%';
