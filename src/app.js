@@ -81,6 +81,7 @@
     state.idx = 0; state.correct = 0; state.miss = 0;
     state.startMs = performance.now();
     MAP.reset();
+    for (const k in answeredMarks) delete answeredMarks[k];
     // 通常/サッカーは全国地図を quiz-stage に描画
     if (s.mode === 'normal' || s.mode === 'soccer') {
       MAP.renderFull($('quiz-stage'), { onPick: onMapPick });
