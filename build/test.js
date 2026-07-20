@@ -1,6 +1,7 @@
 // build/test.js
 const assert = require('assert');
 const { MAP_VIEWBOX, PREFECTURES, JLEAGUE } = require('../src/data.js');
+const L = require('../src/logic.js');
 
 let pass = 0, fail = 0;
 function test(name, fn){ try{ fn(); pass++; } catch(e){ fail++; console.error('FAIL:', name, '-', e.message); } }
@@ -44,6 +45,72 @@ test('6 prefectures have no J-League team', () => {
   const withTeam = new Set(JLEAGUE.map(j => j.prefId));
   const without = PREFECTURES.filter(p => !withTeam.has(p.id)).length;
   assert.strictEqual(without, 6);
+});
+
+test('mulberry32 deterministic', () => {
+  const a = L.mulberry32(42), b = L.mulberry32(42);
+  assert.strictEqual(a(), b());
+});
+test('shuffled keeps elements, non-destructive', () => {
+  const src = [1,2,3,4,5]; const out = L.shuffled(src, L.mulberry32(1));
+  assert.deepStrictEqual([...src], [1,2,3,4,5]);
+  assert.deepStrictEqual([...out].sort((x,y)=>x-y), [1,2,3,4,5]);
+});
+test('settingKey', () => {
+  assert.strictEqual(L.settingKey({mode:'soccer'}), 'soccer');
+  assert.strictEqual(L.settingKey({mode:'normal',dir:'place2name',level:'easy'}), 'normal|place2name|easy');
+});
+test('isValidCombo blocks solo+name2place+hard', () => {
+  assert.strictEqual(L.isValidCombo({mode:'solo',dir:'name2place',level:'hard'}), false);
+  assert.strictEqual(L.isValidCombo({mode:'solo',dir:'name2place',level:'easy'}), true);
+  assert.strictEqual(L.isValidCombo({mode:'normal',dir:'name2place',level:'hard'}), true);
+});
+test('makeChoices contains answer, 3 unique', () => {
+  const ids = Array.from({length:47},(_,i)=>i+1);
+  const c = L.makeChoices(13, ids, L.mulberry32(3));
+  assert.strictEqual(c.length, 3);
+  assert.ok(c.includes(13));
+  assert.strictEqual(new Set(c).size, 3);
+});
+test('makeMapHints contains answer, 3 unique', () => {
+  const ids = Array.from({length:47},(_,i)=>i+1);
+  const h = L.makeMapHints(5, ids, L.mulberry32(9));
+  assert.strictEqual(h.length, 3);
+  assert.ok(h.includes(5));
+  assert.strictEqual(new Set(h).size, 3);
+});
+test('normalizeAnswer strips spaces', () => {
+  assert.strictEqual(L.normalizeAnswer('  東京 都 '), '東京都');
+  assert.strictEqual(L.normalizeAnswer('東京　都'), '東京都');
+});
+test('judgeTyped accepts full and short forms', () => {
+  const tokyo = { kanji:'東京都', accept:['東京都','東京'] };
+  assert.strictEqual(L.judgeTyped('東京都', tokyo), true);
+  assert.strictEqual(L.judgeTyped(' 東京 ', tokyo), true);
+  assert.strictEqual(L.judgeTyped('大阪', tokyo), false);
+});
+test('emojiCountForTime: faster gives more, clamped', () => {
+  assert.ok(L.emojiCountForTime(0.5) > L.emojiCountForTime(5));
+  assert.ok(L.emojiCountForTime(0) <= 90);
+  assert.ok(L.emojiCountForTime(999) >= 15);
+  assert.strictEqual(Number.isInteger(L.emojiCountForTime(2)), true);
+});
+test('buildQueue normal: 47 shuffled prefIds', () => {
+  const q = L.buildQueue({mode:'normal',dir:'place2name',level:'easy'}, PREFECTURES, JLEAGUE, L.mulberry32(7));
+  assert.strictEqual(q.length, 47);
+  assert.deepStrictEqual(q.map(x=>x.prefId).sort((a,b)=>a-b), Array.from({length:47},(_,i)=>i+1));
+});
+test('buildQueue soccer: one per team with team name', () => {
+  const q = L.buildQueue({mode:'soccer'}, PREFECTURES, JLEAGUE, L.mulberry32(2));
+  assert.strictEqual(q.length, JLEAGUE.length);
+  assert.ok(q.every(x => typeof x.team === 'string' && x.prefId >= 1 && x.prefId <= 47));
+});
+test('updateRecord only on allCorrect, keeps faster', () => {
+  let r = {};
+  r = L.updateRecord(r, 'k', 5000, false); assert.strictEqual(r.k, undefined);
+  r = L.updateRecord(r, 'k', 5000, true);  assert.strictEqual(r.k.bestTimeMs, 5000);
+  r = L.updateRecord(r, 'k', 8000, true);  assert.strictEqual(r.k.bestTimeMs, 5000);
+  r = L.updateRecord(r, 'k', 3000, true);  assert.strictEqual(r.k.bestTimeMs, 3000);
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);
