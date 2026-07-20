@@ -13,7 +13,12 @@
     startMs: 0, qStartMs: 0, timerId: null,
     curPromptSolved: false,
   };
-  let records = {}; // Task 8 で localStorage に接続
+
+  const REC_KEY = 'jp-quiz-records-v1';
+  function loadRecords(){ try { return JSON.parse(localStorage.getItem(REC_KEY)) || {}; } catch(e){ return {}; } }
+  function saveRecords(){ try { localStorage.setItem(REC_KEY, JSON.stringify(records)); } catch(e){} }
+
+  let records = loadRecords();
 
   // ---- メニュー ----
   const MODES = [['normal','通常（地図）'],['solo','形だけ'],['soccer','サッカー⚽']];
@@ -276,13 +281,17 @@
     const all = state.miss === 0;
     const key = window.LOGIC.settingKey(state.settings);
     records = window.LOGIC.updateRecord(records, key, totalMs, all);
+    const before = (JSON.parse(localStorage.getItem(REC_KEY)||'{}')[key]||{}).bestTimeMs || null;
+    saveRecords();
+    const newBest = all && (before===null || totalMs < before);
     const body = $('result-body'); body.innerHTML='';
     const card = document.createElement('div'); card.className='card';
     const acc = state.queue.length ? Math.round(state.correct/(state.correct+state.miss)*100) : 0;
     card.innerHTML =
       `<p style="font-size:26px">タイム: <b>${(totalMs/1000).toFixed(1)}秒</b></p>`+
       `<p style="font-size:22px">正答率: <b>${acc}%</b>（❌${state.miss}）</p>`+
-      `<p style="font-size:20px">${all?'🎉 ぜんもん正解！':'おしい！もう一度チャレンジ！'}</p>`;
+      `<p style="font-size:20px">${all?'🎉 ぜんもん正解！':'おしい！もう一度チャレンジ！'}</p>`+
+      (newBest ? '<p style="font-size:22px;color:#e67e22">🏅 ベスト更新！</p>' : '');
     body.appendChild(card);
     const again=document.createElement('button'); again.className='btn'; again.textContent='もう一度';
     again.addEventListener('click', startGame);
