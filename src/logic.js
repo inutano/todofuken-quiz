@@ -64,6 +64,7 @@ function updateRecord(records, key, timeMs, allCorrect) {
   }
   return next;
 }
+if (typeof window !== 'undefined') { window.LOGIC = { mulberry32, shuffled, settingKey, isValidCombo, makeChoices, makeMapHints, normalizeAnswer, judgeTyped, emojiCountForTime, buildQueue, updateRecord }; }
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { mulberry32, shuffled, settingKey, isValidCombo, makeChoices,
     makeMapHints, normalizeAnswer, judgeTyped, emojiCountForTime, buildQueue, updateRecord };
