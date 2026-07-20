@@ -138,6 +138,7 @@
     if (state.curPromptSolved) return;
     state.curPromptSolved = true;
     state.correct++;
+    updateHud();
     const p = prefById(prefId);
     const sec = (performance.now() - state.qStartMs) / 1000;
     RAIN.burst(p.emojis, window.LOGIC.emojiCountForTime(sec));
