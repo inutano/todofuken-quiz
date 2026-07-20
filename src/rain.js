@@ -9,6 +9,7 @@
 
   function ensureLayer() {
     layer = document.getElementById('rain-layer');
+    if (!layer) return;
     layer.setAttribute('viewBox', `0 0 100 100`);
     layer.setAttribute('preserveAspectRatio', 'none');
   }
@@ -16,6 +17,7 @@
 
   function burst(emojis, count) {
     if (!layer) ensureLayer();
+    if (!layer) return;
     const n = Math.min(count, MAX - particles.length);
     for (let i = 0; i < n; i++) {
       const t = document.createElementNS(SVGNS, 'text');
