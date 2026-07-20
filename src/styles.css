@@ -1,0 +1,33 @@
+:root{
+  --bg1:#1b2a6b; --bg2:#3d6ee0; --card:#ffffff; --ink:#20305a;
+  --accent:#ffd23f; --good:#2ecc71; --bad:#ff5a7a; --sea:#bfe3f0;
+  --pref:#8fd18b; --pref-answered:#ffe08a; --pref-hint:#ffb3c1; --pref-target:#ff7a59;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:"Hiragino Maru Gothic ProN","Hiragino Sans",system-ui,sans-serif;color:var(--ink)}
+body{background:linear-gradient(160deg,var(--bg1),var(--bg2));overflow:hidden}
+#app{height:100vh;display:flex;align-items:stretch;justify-content:center}
+.screen{width:100%;max-width:900px;margin:auto;padding:16px;display:flex;flex-direction:column;height:100vh}
+.hidden{display:none!important}
+.title{color:#fff;text-align:center;font-size:clamp(28px,6vw,52px);margin:12px 0;text-shadow:0 4px 0 rgba(0,0,0,.25)}
+h2{color:#fff;text-align:center;font-size:32px}
+button{font-family:inherit;cursor:pointer;border:none}
+.btn{background:var(--accent);color:var(--ink);font-weight:800;font-size:20px;
+  padding:14px 20px;border-radius:999px;box-shadow:0 5px 0 #c9a012;transition:transform .05s}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #c9a012}
+.btn.sel{outline:4px solid #fff}
+.card{background:var(--card);border-radius:22px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+#menu-body{display:flex;flex-direction:column;gap:14px;overflow:auto}
+.opt-row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.opt-label{color:#fff;font-weight:800;text-align:center;margin-bottom:4px}
+#quiz-hud{display:flex;justify-content:space-between;color:#fff;font-weight:800;font-size:20px;padding:6px 10px}
+#quiz-stage{flex:1;display:flex;align-items:center;justify-content:center;min-height:0}
+#quiz-stage svg{width:100%;height:100%}
+#quiz-answer{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;padding:12px 0}
+.prompt{color:#fff;font-size:clamp(24px,5vw,40px);font-weight:900;text-align:center}
+#rain-layer{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:50}
+.type-input{font-size:28px;padding:10px 14px;border-radius:14px;border:3px solid var(--accent);text-align:center;width:min(320px,80vw)}
+.correct-flash{animation:flash .4s}
+@keyframes flash{0%{background:var(--good)}100%{background:transparent}}
+.shake{animation:shake .35s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}

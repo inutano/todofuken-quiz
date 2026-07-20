@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>都道府県クイズ</title>
+<link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+<div id="app">
+  <section id="screen-menu" class="screen">
+    <h1 class="title">🗾 都道府県クイズ</h1>
+    <div id="menu-body"></div>
+  </section>
+  <section id="screen-quiz" class="screen hidden">
+    <header id="quiz-hud">
+      <span id="hud-timer">0.0</span>
+      <span id="hud-progress">0 / 0</span>
+      <span id="hud-score">✅0 ❌0</span>
+    </header>
+    <div id="quiz-stage"></div>
+    <div id="quiz-answer"></div>
+    <svg id="rain-layer" aria-hidden="true"></svg>
+  </section>
+  <section id="screen-result" class="screen hidden">
+    <h2>けっか</h2>
+    <div id="result-body"></div>
+  </section>
+</div>
+<!-- 開発時は分割読み込み。最終は build/inline.py で1枚に結合 -->
+<script src="src/data.js"></script>
+<script src="src/logic.js"></script>
+<script src="src/map.js"></script>
+<script src="src/rain.js"></script>
+<script src="src/app.js"></script>
+</body>
+</html>
