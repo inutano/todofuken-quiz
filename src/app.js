@@ -195,6 +195,7 @@
   function renderNormalPlace2Name(q) {
     MAP.setStates({ [q.prefId]:'target' });
     reapplyAnswered();
+    MAP.setClickable([]); // 名前で答えるモードは地図クリック無効（光った県のクリックで正解になるのを防ぐ）
     if (state.settings.level === 'easy') nameChoiceButtons(q.prefId);
     else typeInput(q.prefId);
   }
