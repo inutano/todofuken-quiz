@@ -8,7 +8,7 @@
   }
 
   const state = {
-    settings: { mode:'normal', dir:'place2name', level:'easy' },
+    settings: { mode:'normal', dir:'place2name', level:'easy', region:'all' },
     queue: [], idx: 0, correct: 0, miss: 0,
     startMs: 0, qStartMs: 0, timerId: null,
     curPromptSolved: false,
@@ -32,6 +32,9 @@
     const dirRow = optRow('こたえかた', DIRS, 'dir');
     const lvlRow = optRow('レベル', LEVELS, 'level');
     body.appendChild(dirRow); body.appendChild(lvlRow);
+    const REGION_OPTS = window.REGION_ORDER.map(k => [k, window.REGIONS[k].name]);
+    const regionRow = optRow('エリア', REGION_OPTS, 'region');
+    body.appendChild(regionRow);
 
     const best = document.createElement('div');
     best.className = 'opt-label'; best.id = 'menu-best';
@@ -82,14 +85,15 @@
 
   function startGame() {
     const s = state.settings;
-    state.queue = window.LOGIC.buildQueue(s, PREFECTURES, JLEAGUE, seedRand());
+    const rids = (s.region && s.region !== 'all') ? window.REGIONS[s.region].ids : null;
+    state.queue = window.LOGIC.buildQueue(s, PREFECTURES, JLEAGUE, seedRand(), rids);
     state.idx = 0; state.correct = 0; state.miss = 0;
     state.startMs = performance.now();
     MAP.reset();
     for (const k in answeredMarks) delete answeredMarks[k];
     // 通常/サッカーは全国地図を quiz-stage に描画
     if (s.mode === 'normal' || s.mode === 'soccer') {
-      MAP.renderFull($('quiz-stage'), { onPick: onMapPick });
+      MAP.renderFull($('quiz-stage'), { onPick: onMapPick, viewBox: window.regionViewBox(s.region, PREFECTURES, MAP_VIEWBOX) });
     }
     showScreen('quiz');
     startTimer();
@@ -198,19 +202,24 @@
   function renderNormalName2Place(q) {
     const p = prefById(q.prefId);
     setPrompt(`「${p.kanji}」はどこ？`);
+    const region = state.settings.region;
+    const pool = (region && region !== 'all') ? window.REGIONS[region].ids : allIds;
     if (state.settings.level === 'easy') {
-      const hints = window.LOGIC.makeMapHints(q.prefId, allIds, seedRand(), Object.keys(answeredMarks).map(Number));
+      const hints = window.LOGIC.makeMapHints(q.prefId, pool, seedRand(), Object.keys(answeredMarks).map(Number));
       const st = {}; hints.forEach(id => st[id]='hint');
       MAP.setStates(st); reapplyAnswered();
       MAP.setClickable(hints);
     } else {
-      MAP.setStates({}); reapplyAnswered(); MAP.setClickable(null);
+      MAP.setStates({}); reapplyAnswered();
+      MAP.setClickable((region && region !== 'all') ? window.REGIONS[region].ids : null);
     }
   }
   // ---- サッカー ----
   function renderSoccer(q) {
     setPrompt(`⚽ ${q.team}\nの本拠地は？`);
-    MAP.setStates({}); reapplyAnswered(); MAP.setClickable(null);
+    const region = state.settings.region;
+    MAP.setStates({}); reapplyAnswered();
+    MAP.setClickable((region && region !== 'all') ? window.REGIONS[region].ids : null);
   }
   // 地図クリックの受け口（name2place / soccer）
   function onMapPick(id) {

@@ -17,7 +17,8 @@ function shuffled(arr, rand) {
   return a;
 }
 function settingKey(s) {
-  return s.mode === 'soccer' ? 'soccer' : `${s.mode}|${s.dir}|${s.level}`;
+  const region = (s.region && s.region !== 'all') ? '|' + s.region : '';
+  return (s.mode === 'soccer' ? 'soccer' : `${s.mode}|${s.dir}|${s.level}`) + region;
 }
 function isValidCombo(s) {
   if (s.mode === 'solo' && s.dir === 'name2place' && s.level === 'hard') return false;
@@ -48,11 +49,12 @@ function emojiCountForTime(sec) {
   const raw = Math.round(70 - sec * 7);
   return Math.max(15, Math.min(90, raw));
 }
-function buildQueue(settings, prefs, jleague, rand) {
+function buildQueue(settings, prefs, jleague, rand, regionIds = null) {
+  const inRegion = regionIds ? (id => regionIds.includes(id)) : (() => true);
   if (settings.mode === 'soccer') {
-    return shuffled(jleague.map(j => ({ prefId: j.prefId, team: j.team })), rand);
+    return shuffled(jleague.filter(j => inRegion(j.prefId)).map(j => ({ prefId: j.prefId, team: j.team })), rand);
   }
-  return shuffled(prefs.map(p => ({ prefId: p.id })), rand);
+  return shuffled(prefs.filter(p => inRegion(p.id)).map(p => ({ prefId: p.id })), rand);
 }
 function updateRecord(records, key, timeMs, allCorrect) {
   const next = { ...records };

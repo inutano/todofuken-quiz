@@ -2,6 +2,7 @@
 const assert = require('assert');
 const { MAP_VIEWBOX, PREFECTURES, JLEAGUE } = require('../src/data.js');
 const L = require('../src/logic.js');
+const R = require('../src/regions.js');
 
 let pass = 0, fail = 0;
 function test(name, fn){ try{ fn(); pass++; } catch(e){ fail++; console.error('FAIL:', name, '-', e.message); } }
@@ -141,6 +142,60 @@ test('makeChoices backward-compatible without exclude arg', () => {
   assert.strictEqual(c.length, 3);
   assert.ok(c.includes(30));
   assert.strictEqual(new Set(c).size, 3);
+});
+
+test('regionIds counts', () => {
+  assert.strictEqual(R.regionIds('hokkaido').length, 1);
+  assert.strictEqual(R.regionIds('tohoku').length, 6);
+  assert.strictEqual(R.regionIds('kanto').length, 7);
+  assert.strictEqual(R.regionIds('chubu').length, 9);
+  assert.strictEqual(R.regionIds('kansai').length, 7);
+  assert.strictEqual(R.regionIds('chugoku').length, 5);
+  assert.strictEqual(R.regionIds('shikoku').length, 4);
+  assert.strictEqual(R.regionIds('kyushu').length, 8);
+  assert.strictEqual(R.regionIds('all').length, 47);
+});
+test('regionOf maps prefectures', () => {
+  assert.strictEqual(R.regionOf(1), 'hokkaido');
+  assert.strictEqual(R.regionOf(13), 'kanto');
+  assert.strictEqual(R.regionOf(27), 'kansai');
+  assert.strictEqual(R.regionOf(36), 'shikoku');
+  assert.strictEqual(R.regionOf(47), 'kyushu');
+});
+test('regionViewBox all equals national', () => {
+  assert.deepStrictEqual(R.regionViewBox('all', PREFECTURES, MAP_VIEWBOX), MAP_VIEWBOX);
+});
+test('regionViewBox region is positive and within canvas', () => {
+  const vb = R.regionViewBox('shikoku', PREFECTURES, MAP_VIEWBOX);
+  assert.strictEqual(vb.length, 4);
+  assert.ok(vb[2] > 0 && vb[3] > 0);
+  assert.ok(vb[0] >= 0 && vb[1] >= 0);
+  assert.ok(vb[0] + vb[2] <= MAP_VIEWBOX[2] + 0.01);
+  assert.ok(vb[1] + vb[3] <= MAP_VIEWBOX[3] + 0.01);
+});
+
+test('settingKey without region is unchanged (backward compat)', () => {
+  assert.strictEqual(L.settingKey({mode:'normal',dir:'place2name',level:'easy'}), 'normal|place2name|easy');
+  assert.strictEqual(L.settingKey({mode:'normal',dir:'place2name',level:'easy',region:'all'}), 'normal|place2name|easy');
+  assert.strictEqual(L.settingKey({mode:'soccer'}), 'soccer');
+});
+test('settingKey appends region when not all', () => {
+  assert.strictEqual(L.settingKey({mode:'normal',dir:'place2name',level:'easy',region:'kanto'}), 'normal|place2name|easy|kanto');
+  assert.strictEqual(L.settingKey({mode:'soccer',region:'kyushu'}), 'soccer|kyushu');
+});
+test('buildQueue filters by regionIds', () => {
+  const q = L.buildQueue({mode:'normal',dir:'place2name',level:'easy',region:'shikoku'}, PREFECTURES, JLEAGUE, L.mulberry32(1), [36,37,38,39]);
+  assert.strictEqual(q.length, 4);
+  assert.ok(q.every(x => [36,37,38,39].includes(x.prefId)));
+});
+test('buildQueue null regionIds keeps all 47 (backward compat)', () => {
+  const q = L.buildQueue({mode:'normal',dir:'place2name',level:'easy'}, PREFECTURES, JLEAGUE, L.mulberry32(1));
+  assert.strictEqual(q.length, 47);
+});
+test('buildQueue soccer filters teams by region prefId', () => {
+  const q = L.buildQueue({mode:'soccer',region:'shikoku'}, PREFECTURES, JLEAGUE, L.mulberry32(1), [36,37,38,39]);
+  assert.ok(q.length > 0);
+  assert.ok(q.every(x => [36,37,38,39].includes(x.prefId) && typeof x.team === 'string'));
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

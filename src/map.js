@@ -13,7 +13,8 @@
     for (const k in paths) delete paths[k];
     for (const k in marks) delete marks[k];
     svg = document.createElementNS(SVGNS, 'svg');
-    svg.setAttribute('viewBox', MAP_VIEWBOX.join(' '));
+    const vb = (opts && opts.viewBox) ? opts.viewBox : MAP_VIEWBOX;
+    svg.setAttribute('viewBox', vb.join(' '));
     svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     for (const p of PREFECTURES) {
       const path = document.createElementNS(SVGNS, 'path');
