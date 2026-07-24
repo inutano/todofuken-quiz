@@ -174,5 +174,29 @@ test('regionViewBox region is positive and within canvas', () => {
   assert.ok(vb[1] + vb[3] <= MAP_VIEWBOX[3] + 0.01);
 });
 
+test('settingKey without region is unchanged (backward compat)', () => {
+  assert.strictEqual(L.settingKey({mode:'normal',dir:'place2name',level:'easy'}), 'normal|place2name|easy');
+  assert.strictEqual(L.settingKey({mode:'normal',dir:'place2name',level:'easy',region:'all'}), 'normal|place2name|easy');
+  assert.strictEqual(L.settingKey({mode:'soccer'}), 'soccer');
+});
+test('settingKey appends region when not all', () => {
+  assert.strictEqual(L.settingKey({mode:'normal',dir:'place2name',level:'easy',region:'kanto'}), 'normal|place2name|easy|kanto');
+  assert.strictEqual(L.settingKey({mode:'soccer',region:'kyushu'}), 'soccer|kyushu');
+});
+test('buildQueue filters by regionIds', () => {
+  const q = L.buildQueue({mode:'normal',dir:'place2name',level:'easy',region:'shikoku'}, PREFECTURES, JLEAGUE, L.mulberry32(1), [36,37,38,39]);
+  assert.strictEqual(q.length, 4);
+  assert.ok(q.every(x => [36,37,38,39].includes(x.prefId)));
+});
+test('buildQueue null regionIds keeps all 47 (backward compat)', () => {
+  const q = L.buildQueue({mode:'normal',dir:'place2name',level:'easy'}, PREFECTURES, JLEAGUE, L.mulberry32(1));
+  assert.strictEqual(q.length, 47);
+});
+test('buildQueue soccer filters teams by region prefId', () => {
+  const q = L.buildQueue({mode:'soccer',region:'shikoku'}, PREFECTURES, JLEAGUE, L.mulberry32(1), [36,37,38,39]);
+  assert.ok(q.length > 0);
+  assert.ok(q.every(x => [36,37,38,39].includes(x.prefId) && typeof x.team === 'string'));
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
