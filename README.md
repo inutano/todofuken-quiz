@@ -12,6 +12,12 @@
 
 タイムと正答率を計測し、全問正解の最速を目指す。正解すると関係する絵文字が降ってくる（速いほど大量）。
 
+## エリア選択
+メニューの「エリア」で全国／北海道／東北／関東／中部甲信越／関西／中国／四国／九州を選べます。エリアを選ぶとその地方の県だけが出題され、地図がその地方に拡大されて選びやすくなります。
+
+## フォント
+ピクセルフォント **PixelMplus12**（© 2002-2013 M+ FONTS PROJECT、M+ FONT LICENSE）を、アプリで使う文字にサブセット化して埋め込んでいます。
+
 ## 開発・ビルド
 - 地図データ生成: `python3 build/convert_geojson.py`（要 `/tmp/japan.geojson`）→ `build/prefectures.json`
 - データモジュール生成: `python3 build/make_data.py` → `src/data.js`
